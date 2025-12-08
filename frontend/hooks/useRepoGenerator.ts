@@ -50,7 +50,13 @@ export function useRepoGenerator() {
         }, 800);
 
         try {
-            const response = await fetch("http://127.0.0.1:8000/analyze", {
+            // Use environment variable or default to localhost
+            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
+
+            // Remove trailing slash if present to avoid //analyze
+            const baseUrl = backendUrl.replace(/\/$/, "");
+
+            const response = await fetch(`${baseUrl}/analyze`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
