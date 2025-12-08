@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ArrowRight, Loader2 } from "lucide-react";
 
 interface RepoInputProps {
-    onAnalyze: (url: str) => void;
+    onAnalyze: (url: string) => void;
     isLoading: boolean;
 }
 
