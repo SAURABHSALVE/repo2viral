@@ -14,7 +14,11 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 // FAIL-SAFE: If keys are missing (like during a build), use dummy values so it doesn't crash.
 // The app won't work without keys, but it will at least finish building.
-export const supabase = createClient(
-    supabaseUrl || 'https://placeholder.supabase.co',
-    supabaseAnonKey || 'placeholder-key'
-);
+// NOTE: We must ensure the dummy URL is a valid URL format 'https://...' to pass library validation.
+const url = supabaseUrl && supabaseUrl.startsWith('http')
+    ? supabaseUrl
+    : 'https://placeholder.supabase.co';
+
+const key = supabaseAnonKey || 'placeholder-key';
+
+export const supabase = createClient(url, key);
