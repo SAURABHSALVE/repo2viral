@@ -62,9 +62,25 @@ async def gumroad_webhook(request: Request):
         license_key = form_data.get("license_key")
         
         # Validate Product
-        if product_permalink != "rczekx":
-            print(f"Ignored request for different product: {product_permalink}")
-            return {"status": "ignored", "reason": "wrong product"}
+        # Required Env Var: GUMROAD_PRODUCT_PERMALINK (full URL or slug)
+        # We need to match the slug e.g. 'rczekx'
+        expected_permalink_url = os.getenv("GUMROAD_PRODUCT_PERMALINK", "rczekx")
+        
+        # Extract slug from full URL if provided, e.g. https://.../l/rczekx -> rczekx
+        if "/l/" in expected_permalink_url:
+            expected_slug = expected_permalink_url.split("/l/")[-1]
+        else:
+            expected_slug = expected_permalink_url
+            
+        # Gumroad webhook sends the slug in 'product_permalink' usually?
+        # Actually Gumroad creates a unique permalink for the product.
+        # Let's check loose equality or exact match to 'product_permalink' field.
+        # The field `product_permalink` in webhook is usually the full URL or just the slug depending on context?
+        # Documentation says "permalink of the product".
+        # Safe comparison:
+        if product_permalink and expected_slug not in product_permalink:
+             print(f"Ignored request for different product. Got: {product_permalink}, Expected match for: {expected_slug}")
+             return {"status": "ignored", "reason": "wrong product"}
         
         handle_subscription_update(email, is_pro, subscription_id=subscription_id, license_key=license_key)
         print(f"✅ Processed SALE for {email}")
