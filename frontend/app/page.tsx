@@ -38,6 +38,14 @@ export default function Home() {
           <span className="font-bold text-lg tracking-tight">Repo2Viral</span>
         </div>
         <LoginButton />
+        <a
+          href="https://saurabhsalve.gumroad.com/l/rczekx"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hidden sm:inline-flex ml-4 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg hover:opacity-90 transition-opacity"
+        >
+          Upgrade to Pro
+        </a>
       </nav>
 
       <div className="relative max-w-6xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
@@ -137,9 +145,19 @@ export default function Home() {
                   </li>
                 </ul>
 
-                <button className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition-all transform hover:scale-105">
-                  Upgrade for $9/mo
-                </button>
+                <div className="space-y-4">
+                  <a
+                    href="https://saurabhsalve.gumroad.com/l/rczekx"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition-all transform hover:scale-105 text-center"
+                  >
+                    Upgrade for $15/mo
+                  </a>
+                  <p className="text-xs text-slate-500 text-center">
+                    Secure payment via Gumroad
+                  </p>
+                </div>
               </div>
             </div>
           </div>

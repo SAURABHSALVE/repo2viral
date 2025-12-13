@@ -1,0 +1,15 @@
+[site]
+  name = "repo2viral-backend"
+  output_dir = "public" # Not used for Python, but schema validation might like it
+
+[build]
+  context = "."
+  publish = "public" # Not used
+  command = "pip install -r requirements.txt"
+
+[dev]
+  command = "uvicorn main:app --reload"
+
+# Render-specific configuration via render.yaml usually better,
+# but for manual setup, we just need the start command.
+# START COMMAND: uvicorn main:app --host 0.0.0.0 --port $PORT

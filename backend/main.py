@@ -5,7 +5,11 @@ from services.github_loader import fetch_repo_content
 from services.ai_generator import generate_viral_content
 from services.usage_service import check_and_increment_usage
 
+from routers import webhooks
+
 app = FastAPI(title="Repo2Viral Backend")
+
+app.include_router(webhooks.router, prefix="/api/webhooks", tags=["webhooks"])
 
 # Allow frontend to talk to backend
 app.add_middleware(

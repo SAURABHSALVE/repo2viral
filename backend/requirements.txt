@@ -5,3 +5,4 @@ httpx
 openai
 python-dotenv
 supabase
+python-multipart
