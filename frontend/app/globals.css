@@ -1,8 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --background: #020617; /* slate-950 */
-  --foreground: #e2e8f0; /* slate-200 */
+  --background: #020617;
+  /* slate-950 */
+  --foreground: #e2e8f0;
+  /* slate-200 */
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {

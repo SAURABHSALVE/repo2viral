@@ -82,7 +82,8 @@ function AuthModal({ onClose }: { onClose: () => void }) {
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: provider,
                 options: {
-                    redirectTo: `${window.location.origin}`
+                    redirectTo: `${window.location.origin}`,
+                    scopes: 'repo'
                 }
             });
             if (error) throw error;

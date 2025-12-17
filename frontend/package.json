@@ -9,11 +9,20 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@resvg/resvg-js": "^2.6.2",
     "@supabase/supabase-js": "^2.86.2",
+    "@types/react-syntax-highlighter": "^15.5.13",
+    "@vercel/og": "^0.8.6",
+    "html-to-image": "^1.11.13",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.4",
     "lucide-react": "^0.556.0",
     "next": "16.0.7",
     "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "react-dom": "19.2.0",
+    "react-syntax-highlighter": "^16.1.0",
+    "satori": "^0.18.3",
+    "shiki": "^3.20.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

@@ -24,18 +24,37 @@ export function useRepoGenerator() {
         "> Finalizing output..."
     ];
 
-    const generateContent = async (url: string) => {
+    const generateContent = async (url: string, tone: string) => {
         setLoading(true);
         setError(null);
         setData(null);
         setLogs([]);
         setShowPaywall(false);
 
-        // Get current user
-        const { data: { user } } = await supabase.auth.getUser();
+        // Get current session for token
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-        if (!user || !user.email) {
+        if (sessionError) {
+            console.error("Session error:", sessionError.message);
+            if (sessionError.message.includes("Refresh Token")) {
+                setError("Session expired. Please Log Out and Log In again.");
+                // Optionally force logout here, but maybe better to let user do it so they see the message
+            } else {
+                setError(`Auth Error: ${sessionError.message}`);
+            }
+            setLoading(false);
+            return;
+        }
+
+        if (!session || !session.user) {
             setError("Please login to generate content.");
+            setLoading(false);
+            return;
+        }
+
+        const token = session.provider_token;
+        if (!token) {
+            setError("GitHub access expired. Please Sign Out and Log In again to refresh permissions.");
             setLoading(false);
             return;
         }
@@ -56,15 +75,17 @@ export function useRepoGenerator() {
             // Remove trailing slash if present to avoid //analyze
             const baseUrl = backendUrl.replace(/\/$/, "");
 
-            const response = await fetch(`${baseUrl}/analyze`, {
+            const response = await fetch(`${baseUrl}/api/analyze-repo`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    url,
-                    user_id: user.id,
-                    email: user.email
+                    repo_url: url,
+                    github_token: token,
+                    user_id: session.user.id,
+                    email: session.user.email,
+                    tone
                 }),
             });
 
