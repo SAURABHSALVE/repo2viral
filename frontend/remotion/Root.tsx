@@ -10,8 +10,8 @@ export const RemotionRoot: React.FC = () => {
                 component={RepoTrailer}
                 durationInFrames={450} // 15 seconds * 30 fps
                 fps={30}
-                width={1080}
-                height={1920} // Vertical 9:16 for Mobile/Shorts/Reels (Or 1080x1080 for Square?) 
+                width={1920}
+                height={1080} // Landscape 16:9 for YouTube/Twitter/LinkedIn 
                 // User asked for "MP4 teaser video". Let's assume standard 16:9 1920x1080 or better 1080x1080 for social media. 
                 // Let's stick to 1080x1080 (Square) or 1080x1920 (Portrait) since it's "Viral". 
                 // I will do 1080x1920 (Portrait) as it's best for TikTok/Reels which is "Viral".

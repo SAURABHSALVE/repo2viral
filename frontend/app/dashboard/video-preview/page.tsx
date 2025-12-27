@@ -103,11 +103,18 @@ export function generateViralVideo() {
 
         try {
             setDownloading(true);
+
+            // Resolve absolute URL for music track
+            let absoluteInputProps = { ...inputProps };
+            if (inputProps.musicTrack && inputProps.musicTrack.startsWith('/')) {
+                absoluteInputProps.musicTrack = window.location.origin + inputProps.musicTrack;
+            }
+
             const response = await fetch('/api/render-video', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    inputProps,
+                    inputProps: absoluteInputProps,
                     compositionId: "RepoTrailer"
                 })
             });
