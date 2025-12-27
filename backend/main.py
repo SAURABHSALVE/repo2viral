@@ -110,6 +110,9 @@ async def analyze_repo_deep(request: AnalyzeRequest):
     
     if not content_data:
         raise HTTPException(status_code=500, detail="AI generation failed.")
+    
+    # Inject Repo Stats into the result so frontend can use it for Video
+    content_data["repo_stats"] = structure_data.get("repo_stats", {})
 
     # Step 3: Save to History
     try:

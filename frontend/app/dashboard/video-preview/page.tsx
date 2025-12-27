@@ -27,7 +27,7 @@ export default function VideoPreviewPage() {
         const checkUser = async () => {
             const { data: { session } } = await supabase.auth.getSession();
             if (session?.user) {
-                // Check usage table for pro status
+                // 1. Check Pro Status
                 const { data: usage } = await supabase
                     .from('user_usage')
                     .select('is_pro')
@@ -35,13 +35,47 @@ export default function VideoPreviewPage() {
                     .single();
 
                 setIsPro(usage?.is_pro || false);
+
+                // 2. Fetch Latest Analysis Data
+                try {
+                    const { data: history, error } = await supabase
+                        .from('content_history')
+                        .select('generated_content')
+                        .eq('user_id', session.user.id)
+                        .order('created_at', { ascending: false })
+                        .limit(1)
+                        .single();
+
+                    if (history && history.generated_content) {
+                        const content = history.generated_content;
+                        // Handle both JSON object and stringified JSON
+                        const parsed = typeof content === 'string' ? JSON.parse(content) : content;
+
+                        const videoMeta = parsed.video_metadata || {};
+                        const repoStats = parsed.repo_stats || {};
+
+                        setInputProps(prev => ({
+                            ...prev,
+                            repoName: repoStats.name || "My Awesome Repo",
+                            ownerAvatar: repoStats.avatar || prev.ownerAvatar,
+                            hookText: videoMeta.hook_text || prev.hookText,
+                            codeSnippet: videoMeta.code_snippet?.substring(0, 400) || prev.codeSnippet,
+                            stats: {
+                                stars: repoStats.stars || 0,
+                                forks: repoStats.forks || 0
+                            }
+                        }));
+                    }
+                } catch (err) {
+                    console.error("Error fetching history:", err);
+                }
             }
             setLoading(false);
         };
         checkUser();
     }, []);
 
-    // Mock Data - In real app, this comes from the analysis result
+    // Initial State (Will be overwritten by effect)
     const [inputProps, setInputProps] = useState<z.infer<typeof repoTrailerSchema>>({
         repoName: "Repo2Viral",
         ownerAvatar: "https://avatars.githubusercontent.com/u/1234567?v=4",

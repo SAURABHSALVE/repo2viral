@@ -64,7 +64,11 @@ Structure your response exactly like this JSON structure:
     // ... 5-7 slides total. 
     // Slide 4 MUST be type='technical' and cite a file. 
     // Slide 5 MUST be type='technical' and cite a file.
-  ]
+  ],
+  "video_metadata": {
+    "hook_text": "A short, punchy 1-line hook for a video trailer (max 40 chars)",
+    "code_snippet": "A representative code snippet (max 8 lines). Clean, indented, and impressive. If possible, use lines from the Entry Point provided."
+  }
 }
 
 Carousel Rules:
@@ -143,7 +147,11 @@ def parse_ai_response(text: str):
             "twitter_thread": data.get("twitter_thread", ""),
             "linkedin_post": data.get("linkedin_post", ""),
             "blog_intro": data.get("blog_intro", ""),
-            "slides": data.get("slides", [])
+            "slides": data.get("slides", []),
+            "video_metadata": data.get("video_metadata", {
+                "hook_text": "Code to Content in Seconds.",
+                "code_snippet": "def analyze():\n  return 'viral'"
+            })
         }
     except json.JSONDecodeError:
         print("Failed to parse JSON response")

@@ -35,7 +35,15 @@ async def analyze_repo_structure(repo_url: str, token: str):
         if repo_resp.status_code != 200:
             raise Exception(f"Failed to fetch repo info: {repo_resp.text}")
             
-        default_branch = repo_resp.json().get("default_branch", "main")
+        repo_info = repo_resp.json()
+        default_branch = repo_info.get("default_branch", "main")
+        repo_stats = {
+            "stars": repo_info.get("stargazers_count", 0),
+            "forks": repo_info.get("forks_count", 0),
+            "avatar": repo_info.get("owner", {}).get("avatar_url", ""),
+            "name": repo_info.get("name", repo),
+            "description": repo_info.get("description", "")
+        }
         
         # Get Tree
         tree_resp = await client.get(f"https://api.github.com/repos/{owner}/{repo}/git/trees/{default_branch}?recursive=1", headers=headers)
@@ -154,5 +162,6 @@ async def analyze_repo_structure(repo_url: str, token: str):
             "entry_point_name": selected_entry,
             "entry_point_content": entry_content,
             "readme_content": readme_content,
-            "evidence": evidence
+            "evidence": evidence,
+            "repo_stats": repo_stats
         }
