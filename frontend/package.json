@@ -9,7 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@remotion/bundler": "^4.0.395",
     "@remotion/player": "^4.0.393",
+    "@remotion/renderer": "^4.0.395",
     "@remotion/shapes": "^4.0.393",
     "@remotion/zod-types": "^4.0.393",
     "@resvg/resvg-js": "^2.6.2",

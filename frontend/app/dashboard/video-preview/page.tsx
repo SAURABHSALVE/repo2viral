@@ -97,18 +97,42 @@ export function generateViralVideo() {
     const handleDownload = async () => {
         if (!isPro) {
             alert("🔒 Premium Feature: Upgrade to Pro ($15/mo) to download watermark-free HD videos and unlock 30 AI posts!");
-            // Redirect to pricing
             router.push('/pricing');
             return;
         }
 
-        setDownloading(true);
-        // This is where you'd call the /api/render-video endpoint
-        // await fetch('/api/render-video', { method: 'POST', body: JSON.stringify(inputProps) });
-        setTimeout(() => {
-            alert("Starting server-side render...");
+        try {
+            setDownloading(true);
+            const response = await fetch('/api/render-video', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    inputProps,
+                    compositionId: "RepoTrailer"
+                })
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error || "Download failed");
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `repo-trailer-${inputProps.repoName || 'video'}.mp4`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            alert("Download started!");
+        } catch (e: any) {
+            console.error(e);
+            alert("Render failed: " + e.message);
+        } finally {
             setDownloading(false);
-        }, 1000);
+        }
     };
 
     return (
