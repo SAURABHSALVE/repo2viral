@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, History, User, Terminal } from "lucide-react";
+import { LayoutDashboard, History, User, Terminal, Video } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 export default function Sidebar() {
@@ -13,6 +13,7 @@ export default function Sidebar() {
 
     const navItems = [
         { name: "Generator", href: "/dashboard/generator", icon: LayoutDashboard },
+        { name: "Video Studio", href: "/dashboard/video-preview", icon: Video },
         { name: "My Vault", href: "/dashboard/vault", icon: History },
         { name: "Profile", href: "/dashboard/profile", icon: User },
     ];

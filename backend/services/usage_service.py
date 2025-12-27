@@ -37,9 +37,15 @@ def check_and_increment_usage(user_id: str, email: str):
             is_pro = user_data.get("is_pro", False)
 
         # 2. Check limits
-        # Logic: If NOT pro and usage >= 1, block.
-        if not is_pro and usage_count >= 1:
-            raise Exception("Free limit reached")
+        # Logic: 
+        # - Free: Max 2 uses.
+        # - Pro: Max 30 uses.
+        if is_pro:
+            if usage_count >= 30:
+                raise Exception("Pro limit reached (30/month)")
+        else:
+            if usage_count >= 2:
+                raise Exception("Free limit reached")
 
         # 3. Increment usage
         new_count = usage_count + 1

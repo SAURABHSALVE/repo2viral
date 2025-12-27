@@ -4,12 +4,14 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import LoginButton from "@/components/LoginButton";
 import Footer from "@/components/Footer";
-import { Sparkles, Terminal, ArrowRight, Zap, Share2, FileText, Code2, Cpu } from "lucide-react";
+import { Sparkles, Terminal, ArrowRight, Zap, Share2, FileText, Code2, Cpu, Menu, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 export default function Home() {
   const [user, setUser] = useState<any>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
+
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -45,13 +47,33 @@ export default function Home() {
             </div>
             <span className="font-bold text-lg tracking-tight text-white">Repo2Viral</span>
           </div>
-          <div className="flex items-center gap-4">
-            <a href="#features" className="hidden md:block text-slate-400 hover:text-white transition-colors text-sm font-medium">Features</a>
-            <a href="#how-it-works" className="hidden md:block text-slate-400 hover:text-white transition-colors text-sm font-medium">How it Works</a>
-            <div className="h-4 w-px bg-slate-800 hidden md:block" />
+
+          {/* Desktop Nav */}
+          <div className="hidden md:flex items-center gap-4">
+            <a href="#features" className="text-slate-400 hover:text-white transition-colors text-sm font-medium">Features</a>
+            <a href="#how-it-works" className="text-slate-400 hover:text-white transition-colors text-sm font-medium">How it Works</a>
+            <div className="h-4 w-px bg-slate-800" />
             <LoginButton />
           </div>
+
+          {/* Mobile Menu Toggle */}
+          <button
+            className="md:hidden text-slate-400 hover:text-white"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? <X /> : <Menu />}
+          </button>
         </div>
+
+        {/* Mobile Nav Overlay */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden absolute top-full left-0 w-full bg-slate-950 border-b border-slate-800 p-6 flex flex-col gap-4 shadow-2xl animate-fade-in-up">
+            <a href="#features" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium text-slate-400 hover:text-white">Features</a>
+            <a href="#how-it-works" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium text-slate-400 hover:text-white">How it Works</a>
+            <div className="h-px w-full bg-slate-800" />
+            <LoginButton />
+          </div>
+        )}
       </nav>
 
       {/* Hero Content */}
@@ -63,17 +85,17 @@ export default function Home() {
               <span>v1.0 is Live</span>
             </span>
           </div>
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight text-white mb-8 leading-tight">
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight text-white mb-8 leading-tight animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
             Code to Content, <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">
               In Seconds.
             </span>
           </h1>
-          <p className="text-xl md:text-2xl text-slate-400 max-w-2xl mx-auto font-light leading-relaxed mb-10">
+          <p className="text-xl md:text-2xl text-slate-400 max-w-2xl mx-auto font-light leading-relaxed mb-10 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
             Stop wasting hours writing threads. Our AI analyzes your GitHub repo and generates viral Twitter threads, LinkedIn posts, and Blogs instantly.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
             {!user ? (
               <button className="group relative px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full font-bold text-lg transition-all shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40">
                 <span className="flex items-center gap-2">
@@ -188,7 +210,7 @@ export default function Home() {
                 ))}
               </div>
             </div>
-            <div className="relative">
+            <div className="relative animate-float">
               <div className="absolute -inset-4 bg-gradient-to-r from-indigo-500 to-purple-500 opacity-20 blur-3xl rounded-full" />
               <div className="relative bg-slate-950 border border-slate-800 rounded-2xl p-6 shadow-2xl skew-y-3 hover:skew-y-0 transition-transform duration-500">
                 {/* Mock UI Code Window */}
