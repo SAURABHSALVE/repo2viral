@@ -1,4 +1,6 @@
 
+'use client';
+
 import React, { useState } from 'react';
 import Footer from '@/components/Footer';
 import { Terminal, Check, Star, Zap, Video, TrendingUp, Users, Menu, X } from 'lucide-react';
