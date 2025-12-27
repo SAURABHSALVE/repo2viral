@@ -41,8 +41,9 @@ def check_and_increment_usage(user_id: str, email: str):
         # - Free: Max 2 uses.
         # - Pro: Max 30 uses.
         if is_pro:
-            if usage_count >= 30:
-                raise Exception("Pro limit reached (30/month)")
+            # Increased limit for power users/testing
+            if usage_count >= 1000:
+                raise Exception("Pro limit reached (1000/month)")
         else:
             if usage_count >= 2:
                 raise Exception("Free limit reached")
