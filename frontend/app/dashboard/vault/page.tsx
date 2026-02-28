@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { Lock, Calendar, ExternalLink, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
@@ -22,26 +21,22 @@ export default function VaultPage() {
 
     useEffect(() => {
         const fetchData = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
+            try {
+                // Check Pro Status
+                const usageRes = await fetch("/api/user/usage");
+                const usageData = await usageRes.json();
+                if (usageData) setIsPro(usageData.is_pro);
 
-            // Check Pro Status
-            const { data: userData } = await supabase.from("user_usage").select("is_pro").eq("user_id", user.id).maybeSingle();
-            if (userData) setIsPro(userData.is_pro);
+                // Fetch History
+                const historyRes = await fetch("/api/user/history");
+                const historyData = await historyRes.json();
 
-            // Fetch History
-            const { data: historyData, error: fetchError } = await supabase
-                .from("content_history")
-                .select("*")
-                .order("created_at", { ascending: false });
-
-            if (fetchError) {
-                console.error("Error fetching history:", fetchError);
-                setError(fetchError.message);
-            }
-
-            if (historyData) {
-                setHistory(historyData);
+                if (Array.isArray(historyData)) {
+                    setHistory(historyData);
+                }
+            } catch (err: any) {
+                console.error("Error fetching data:", err);
+                setError(err.message || "Failed to load data");
             }
             setLoading(false);
         };
@@ -121,7 +116,7 @@ export default function VaultPage() {
 
                                     <div className="bg-slate-950 p-4 rounded-lg border border-slate-800/50">
                                         <p className="text-slate-400 text-sm line-clamp-2">
-                                            {item.generated_content.twitter_thread?.substring(0, 150)}...
+                                            {item.generated_content?.twitter_thread?.substring(0, 150)}...
                                         </p>
                                     </div>
                                 </div>

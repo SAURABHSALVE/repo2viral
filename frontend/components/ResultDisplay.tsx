@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { Twitter, Linkedin, FileText, LayoutTemplate } from "lucide-react";
 import PreviewCard from "./PreviewCard";
 import CarouselGenerator, { Slide } from "./CarouselGenerator";
-import { supabase } from "@/lib/supabase";
 
 interface ContentData {
     twitter_thread: string;
@@ -24,14 +23,12 @@ export default function ResultDisplay({ data, repoUrl = "https://github.com/exam
 
     useEffect(() => {
         const checkPro = async () => {
-            const { data: { user }, error } = await supabase.auth.getUser();
-            if (error) {
-                console.error("Auth check failed:", error.message);
-                return;
-            }
-            if (user) {
-                const { data } = await supabase.from("user_usage").select("is_pro").eq("user_id", user.id).maybeSingle();
-                if (data) setIsPro(data.is_pro);
+            try {
+                const res = await fetch("/api/user/usage");
+                const usage = await res.json();
+                if (usage) setIsPro(usage.is_pro);
+            } catch (err) {
+                console.error("Failed to check pro status:", err);
             }
         };
         checkPro();

@@ -2,34 +2,21 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import LoginButton from "@/components/LoginButton";
 import Footer from "@/components/Footer";
 import { Sparkles, Terminal, ArrowRight, Zap, Share2, FileText, Code2, Cpu, Menu, X } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 
 export default function Home() {
-  const [user, setUser] = useState<any>(null);
+  const { data: session, status } = useSession();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
 
-
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        router.push("/dashboard/generator");
-      }
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        router.push("/dashboard/generator");
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [router]);
+    if (session?.user) {
+      router.push("/dashboard/generator");
+    }
+  }, [session, router]);
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-200 selection:bg-indigo-500/30 overflow-x-hidden">
@@ -96,7 +83,7 @@ export default function Home() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-            {!user ? (
+            {!session?.user ? (
               <button className="group relative px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full font-bold text-lg transition-all shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40">
                 <span className="flex items-center gap-2">
                   Get Started for Free <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -227,10 +214,10 @@ export default function Home() {
                     <span className="text-slate-400">=</span>
                     <span className="text-green-400">await</span>
                     <span className="text-yellow-400">generate</span>
-                    <span className="text-slate-400">('your-repo');</span>
+                    <span className="text-slate-400">{'(\'your-repo\');'}</span>
                   </div>
                   <div className="pl-4 border-l-2 border-indigo-500/30 text-slate-400 text-xs">
-                    "🚀 Just built a new SaaS using Next.js 14 and Supabase..."
+                    &quot;🚀 Just built a new SaaS using Next.js and MongoDB...&quot;
                   </div>
                   <div className="bg-indigo-500/10 text-indigo-300 p-3 rounded border border-indigo-500/20 mt-4">
                     ✨ Twitter Thread Ready (8 tweets)
@@ -249,7 +236,7 @@ export default function Home() {
           <h2 className="text-4xl md:text-6xl font-bold text-white mb-6">Ready to showcase your work?</h2>
           <p className="text-xl text-slate-400 mb-10 max-w-2xl mx-auto">Join thousands of developers who are building in public without the burnout.</p>
           <button
-            onClick={() => user ? router.push("/dashboard/generator") : document.querySelector('button')?.click()}
+            onClick={() => session?.user ? router.push("/dashboard/generator") : document.querySelector('button')?.click()}
             className="bg-white text-slate-950 hover:bg-slate-200 px-10 py-4 rounded-full font-bold text-xl transition-all shadow-xl shadow-white/10"
           >
             Start Generating Now
@@ -261,4 +248,3 @@ export default function Home() {
     </main>
   );
 }
-

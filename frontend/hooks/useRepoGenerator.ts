@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { useSession } from "next-auth/react";
 
 interface ContentData {
     twitter_thread: string;
@@ -10,6 +10,7 @@ interface ContentData {
 }
 
 export function useRepoGenerator() {
+    const { data: session } = useSession();
     const [data, setData] = useState<ContentData | null>(null);
     const [loading, setLoading] = useState(false);
     const [logs, setLogs] = useState<string[]>([]);
@@ -31,28 +32,13 @@ export function useRepoGenerator() {
         setLogs([]);
         setShowPaywall(false);
 
-        // Get current session for token
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-        if (sessionError) {
-            console.error("Session error:", sessionError.message);
-            if (sessionError.message.includes("Refresh Token")) {
-                setError("Session expired. Please Log Out and Log In again.");
-                // Optionally force logout here, but maybe better to let user do it so they see the message
-            } else {
-                setError(`Auth Error: ${sessionError.message}`);
-            }
-            setLoading(false);
-            return;
-        }
-
-        if (!session || !session.user) {
+        if (!session?.user) {
             setError("Please login to generate content.");
             setLoading(false);
             return;
         }
 
-        const token = session.provider_token;
+        const token = session.accessToken;
         if (!token) {
             setError("GitHub access expired. Please Sign Out and Log In again to refresh permissions.");
             setLoading(false);
@@ -70,7 +56,7 @@ export function useRepoGenerator() {
 
         try {
             // Use environment variable or default to localhost
-            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
+            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
             // Remove trailing slash if present to avoid //analyze
             const baseUrl = backendUrl.replace(/\/$/, "");
@@ -83,7 +69,7 @@ export function useRepoGenerator() {
                 body: JSON.stringify({
                     repo_url: url,
                     github_token: token,
-                    user_id: session.user.id,
+                    user_id: session.userId || session.user.id,
                     email: session.user.email,
                     tone
                 }),

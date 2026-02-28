@@ -8,7 +8,7 @@ import { Download, Play, Volume2, VolumeX, Music, Lock } from "lucide-react";
 import { z } from "zod";
 import { repoTrailerSchema } from "@/remotion/RepoTrailer";
 import { useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 const musicTracks = [
@@ -20,55 +20,43 @@ const musicTracks = [
 
 export default function VideoPreviewPage() {
     const router = useRouter();
+    const { data: session } = useSession();
     const [isPro, setIsPro] = useState(false);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const checkUser = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session?.user) {
+            try {
                 // 1. Check Pro Status
-                const { data: usage } = await supabase
-                    .from('user_usage')
-                    .select('is_pro')
-                    .eq('user_id', session.user.id)
-                    .single();
-
-                setIsPro(usage?.is_pro || false);
+                const usageRes = await fetch("/api/user/usage");
+                const usageData = await usageRes.json();
+                setIsPro(usageData?.is_pro || false);
 
                 // 2. Fetch Latest Analysis Data
-                try {
-                    const { data: history, error } = await supabase
-                        .from('content_history')
-                        .select('generated_content')
-                        .eq('user_id', session.user.id)
-                        .order('created_at', { ascending: false })
-                        .limit(1)
-                        .single();
+                const historyRes = await fetch("/api/user/history");
+                const historyData = await historyRes.json();
 
-                    if (history && history.generated_content) {
-                        const content = history.generated_content;
-                        // Handle both JSON object and stringified JSON
-                        const parsed = typeof content === 'string' ? JSON.parse(content) : content;
+                if (Array.isArray(historyData) && historyData.length > 0) {
+                    const content = historyData[0].generated_content;
+                    const parsed = typeof content === 'string' ? JSON.parse(content) : content;
 
-                        const videoMeta = parsed.video_metadata || {};
-                        const repoStats = parsed.repo_stats || {};
+                    const videoMeta = parsed.video_metadata || {};
+                    const repoStats = parsed.repo_stats || {};
 
-                        setInputProps(prev => ({
-                            ...prev,
-                            repoName: repoStats.name || "My Awesome Repo",
-                            ownerAvatar: repoStats.avatar || prev.ownerAvatar,
-                            hookText: videoMeta.hook_text || prev.hookText,
-                            codeSnippet: videoMeta.code_snippet?.substring(0, 400) || prev.codeSnippet,
-                            stats: {
-                                stars: repoStats.stars || 0,
-                                forks: repoStats.forks || 0
-                            }
-                        }));
-                    }
-                } catch (err) {
-                    console.error("Error fetching history:", err);
+                    setInputProps(prev => ({
+                        ...prev,
+                        repoName: repoStats.name || "My Awesome Repo",
+                        ownerAvatar: repoStats.avatar || prev.ownerAvatar,
+                        hookText: videoMeta.hook_text || prev.hookText,
+                        codeSnippet: videoMeta.code_snippet?.substring(0, 400) || prev.codeSnippet,
+                        stats: {
+                            stars: repoStats.stars || 0,
+                            forks: repoStats.forks || 0
+                        }
+                    }));
                 }
+            } catch (err) {
+                console.error("Error fetching data:", err);
             }
             setLoading(false);
         };
@@ -171,7 +159,7 @@ export function generateViralVideo() {
                             inputProps={inputProps}
                             durationInFrames={450}
                             fps={30}
-                            compositionWidth={1920} // Landscape preview
+                            compositionWidth={1920}
                             compositionHeight={1080}
                             style={{
                                 width: '100%',
@@ -187,7 +175,7 @@ export function generateViralVideo() {
                     </div>
                 </div>
 
-                {/* Controls / Inputs Section (MVP) */}
+                {/* Controls / Inputs Section */}
                 <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 space-y-6">
                     <h3 className="text-xl font-bold text-white mb-4">Customize Trailer</h3>
 

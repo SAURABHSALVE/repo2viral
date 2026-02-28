@@ -1,39 +1,31 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { useSession, signOut } from "next-auth/react";
 import { User as UserIcon, CreditCard, Sparkles, LogOut, Mail, Shield } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 export default function ProfilePage() {
-    const [user, setUser] = useState<any>(null);
+    const { data: session } = useSession();
     const [usage, setUsage] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const router = useRouter();
 
     useEffect(() => {
         const fetchProfile = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                setUser(user);
-                // Use maybeSingle() instead of single() to avoid error when 0 rows
-                const { data, error } = await supabase.from("user_usage").select("*").eq("user_id", user.id).maybeSingle();
-
-                if (data) {
-                    setUsage(data);
-                } else {
-                    // Default/Fallback logic if user_usage is missing
-                    setUsage({ is_pro: false, usage_count: 0 });
-                }
+            try {
+                const res = await fetch("/api/user/usage");
+                const data = await res.json();
+                setUsage(data || { is_pro: false, usage_count: 0 });
+            } catch (err) {
+                console.error("Failed to fetch profile:", err);
+                setUsage({ is_pro: false, usage_count: 0 });
             }
             setLoading(false);
-        }
+        };
         fetchProfile();
     }, []);
 
     const handleSignOut = async () => {
-        await supabase.auth.signOut();
-        router.push("/");
+        await signOut({ callbackUrl: "/" });
     };
 
     if (loading) return <div className="text-slate-400">Loading profile...</div>;
@@ -50,13 +42,19 @@ export default function ProfilePage() {
             {/* Profile Card */}
             <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden">
                 <div className="p-8 flex items-center gap-6 border-b border-slate-800">
-                    <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center">
-                        <UserIcon className="w-8 h-8 text-slate-400" />
+                    <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center overflow-hidden">
+                        {session?.user?.image ? (
+                            <img src={session.user.image} alt="Avatar" className="w-full h-full object-cover" />
+                        ) : (
+                            <UserIcon className="w-8 h-8 text-slate-400" />
+                        )}
                     </div>
                     <div>
-                        <h2 className="text-xl font-bold text-white max-w-xs truncate" title={user?.email}>{user?.email}</h2>
+                        <h2 className="text-xl font-bold text-white max-w-xs truncate" title={session?.user?.email || ""}>
+                            {session?.user?.name || session?.user?.email}
+                        </h2>
                         <p className="text-slate-500 text-sm mt-1 flex items-center gap-2">
-                            <Mail className="w-3 h-3" /> {user?.email}
+                            <Mail className="w-3 h-3" /> {session?.user?.email}
                         </p>
                     </div>
                 </div>
@@ -82,7 +80,7 @@ export default function ProfilePage() {
                         )}
                     </div>
 
-                    {/* Usage Stats (Optional display) */}
+                    {/* Usage Stats */}
                     <div className="flex items-center justify-between p-4 bg-slate-900 rounded-xl border border-slate-800">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-purple-500/20 text-purple-400 rounded-lg">

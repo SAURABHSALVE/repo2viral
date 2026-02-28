@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, History, User, Terminal, Video } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { signOut } from "next-auth/react";
 
 export default function Sidebar() {
     const pathname = usePathname();
@@ -22,9 +22,7 @@ export default function Sidebar() {
         if (isLoggingOut) return;
         setIsLoggingOut(true);
         try {
-            await supabase.auth.signOut();
-            router.refresh();
-            router.replace("/");
+            await signOut({ callbackUrl: "/" });
         } catch (error) {
             console.error("Error signing out:", error);
             setIsLoggingOut(false);

@@ -6,35 +6,27 @@ import ResultDisplay from "@/components/ResultDisplay";
 import TerminalLoader from "@/components/TerminalLoader";
 import { useRepoGenerator } from "@/hooks/useRepoGenerator";
 import { Lock, Sparkles, X } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { useSession, signOut } from "next-auth/react";
 
 export default function GeneratorPage() {
     const { generateContent, data, loading, logs, error, showPaywall, setShowPaywall } = useRepoGenerator();
+    const { data: session } = useSession();
     const [tone, setTone] = useState("Educator");
     const [isPro, setIsPro] = useState(false);
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
     useEffect(() => {
         const checkUserStatus = async () => {
-            const { data: { user }, error } = await supabase.auth.getUser();
-
-            if (error) {
-                console.error("Auth session error:", error.message);
-                // If the refresh token is invalid, we should probably force a logout
-                if (error.message.includes("Refresh Token")) {
-                    await supabase.auth.signOut();
-                    window.location.href = "/";
+            try {
+                const res = await fetch("/api/user/usage");
+                const usage = await res.json();
+                if (usage) {
+                    setIsPro(usage.is_pro);
                 }
-                return;
+            } catch (err) {
+                console.error("Failed to check user status:", err);
             }
-
-            if (user) {
-                const { data } = await supabase.from("user_usage").select("is_pro").eq("user_id", user.id).maybeSingle();
-                if (data) {
-                    setIsPro(data.is_pro);
-                }
-            }
-        }
+        };
         checkUserStatus();
     }, []);
 
@@ -128,7 +120,7 @@ export default function GeneratorPage() {
                             <div className="space-y-2">
                                 <h2 className="text-2xl font-bold text-white">Unlock Premium Personas</h2>
                                 <p className="text-slate-400">
-                                    Upgrade to Pro to access "Hype Man" and "Senior Dev" personas alongside unlimited generations.
+                                    Upgrade to Pro to access &quot;Hype Man&quot; and &quot;Senior Dev&quot; personas alongside unlimited generations.
                                 </p>
                             </div>
 

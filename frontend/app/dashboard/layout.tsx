@@ -1,30 +1,25 @@
 "use client";
 
 import Sidebar from "@/components/Sidebar";
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function DashboardLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
-    const [loading, setLoading] = useState(true);
+    const { data: session, status } = useSession();
     const router = useRouter();
 
     useEffect(() => {
-        // Check auth
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            if (!session) {
-                router.push("/");
-            } else {
-                setLoading(false);
-            }
-        });
-    }, [router]);
+        if (status === "unauthenticated") {
+            router.push("/");
+        }
+    }, [status, router]);
 
-    if (loading) return null;
+    if (status === "loading" || !session) return null;
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-200 selection:bg-indigo-500/30 font-sans">

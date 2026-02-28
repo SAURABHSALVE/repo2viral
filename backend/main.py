@@ -4,8 +4,9 @@ from pydantic import BaseModel
 from services.github_loader import fetch_repo_content
 from services.ai_generator import generate_viral_content
 from services.usage_service import check_and_increment_usage
+from services.database import db
+from datetime import datetime
 
-from services.usage_service import check_and_increment_usage, supabase
 import json
 
 from routers import webhooks
@@ -60,15 +61,16 @@ async def analyze_repo(request: RepoRequest):
     if not content_data:
         raise HTTPException(status_code=500, detail="AI generation failed. Check API server logs or keys.")
 
-    # Step 3: Save to History
+    # Step 3: Save to History (MongoDB)
     try:
-        supabase.table("content_history").insert({
+        db["content_history"].insert_one({
             "user_id": request.user_id,
             "repo_url": request.url,
             "generated_content": content_data,
             "platform": "All",
-            "tone_used": request.tone
-        }).execute()
+            "tone_used": request.tone,
+            "created_at": datetime.utcnow()
+        })
     except Exception as e:
         print(f"Failed to save history: {e}")
         # We don't fail the request if history save fails, just log it.
@@ -114,15 +116,16 @@ async def analyze_repo_deep(request: AnalyzeRequest):
     # Inject Repo Stats into the result so frontend can use it for Video
     content_data["repo_stats"] = structure_data.get("repo_stats", {})
 
-    # Step 3: Save to History
+    # Step 3: Save to History (MongoDB)
     try:
-        supabase.table("content_history").insert({
+        db["content_history"].insert_one({
             "user_id": request.user_id,
             "repo_url": request.repo_url,
             "generated_content": content_data,
             "platform": "Deep Analysis",
-            "tone_used": request.tone
-        }).execute()
+            "tone_used": request.tone,
+            "created_at": datetime.utcnow()
+        })
     except Exception as e:
         print(f"Failed to save history: {e}")
 
@@ -131,18 +134,32 @@ async def analyze_repo_deep(request: AnalyzeRequest):
 @app.get("/history")
 def get_user_history(user_id: str):
     try:
-        response = supabase.table("content_history").select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
-        return response.data
+        history = list(
+            db["content_history"]
+            .find({"user_id": user_id})
+            .sort("created_at", -1)
+        )
+        # Convert ObjectId to string for JSON serialization
+        for item in history:
+            item["_id"] = str(item["_id"])
+            item["id"] = item["_id"]
+            if "created_at" in item:
+                item["created_at"] = item["created_at"].isoformat()
+        return history
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch history: {str(e)}")
 
 @app.get("/profile")
 def get_user_profile(user_id: str):
     try:
-        # Fetch usage and subscription status
-        response = supabase.table("user_usage").select("*").eq("user_id", user_id).execute()
-        if not response.data:
+        user = db["user_usage"].find_one({"user_id": user_id})
+        if not user:
             raise HTTPException(status_code=404, detail="User not found")
-        return response.data[0]
+        user["_id"] = str(user["_id"])
+        if "created_at" in user:
+            user["created_at"] = user["created_at"].isoformat()
+        return user
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch profile: {str(e)}")

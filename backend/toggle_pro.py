@@ -1,48 +1,40 @@
-import os
-from supabase import create_client, Client
-from dotenv import load_dotenv
-import argparse
+import sys
+from services.database import db
 
-load_dotenv()
 
-# Initialize Supabase
-url: str = os.getenv("SUPABASE_URL")
-key: str = os.getenv("SUPABASE_SERVICE_KEY")
+def toggle_pro_status(email: str, status: bool):
+    collection = db["user_usage"]
 
-if not url or not key:
-    print("Error: SUPABASE_URL or SUPABASE_SERVICE_KEY not found in .env")
-    exit(1)
-
-supabase: Client = create_client(url, key)
-
-def set_pro_status(email: str, status: bool):
-    print(f"Finding user with email: {email}...")
-    
     # Check if user exists in user_usage
-    response = supabase.table("user_usage").select("*").eq("email", email).execute()
-    
-    if not response.data:
+    user = collection.find_one({"email": email})
+
+    if not user:
         print("User not found in 'user_usage' table.")
-        print("Please log in and generate at least one content piece to initialize your user record.")
+        print(f"Make sure {email} has logged in at least once.")
         return
 
-    user_id = response.data[0]['user_id']
-    print(f"Found User ID: {user_id}")
-    
-    # Update status
-    print(f"Setting is_pro = {status}...")
-    supabase.table("user_usage").update({"is_pro": status}).eq("user_id", user_id).execute()
-    
-    print("Success! 🎉")
-    print(f"User {email} is now {'PRO' if status else 'FREE'}.")
-    print("Refresh your dashboard to see the changes.")
+    user_id = user["user_id"]
+    current_status = user.get("is_pro", False)
+    print(f"User ID: {user_id}")
+    print(f"Current Pro Status: {current_status}")
+
+    # Toggle
+    collection.update_one(
+        {"user_id": user_id},
+        {"$set": {"is_pro": status}}
+    )
+    print(f"Pro status updated to: {status}")
+
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Toggle Pro status for a user')
-    parser.add_argument('email', type=str, help='The email of the user to update')
-    parser.add_argument('--free', action='store_true', help='Set status to Free instead of Pro')
-    
-    args = parser.parse_args()
-    
-    is_pro = not args.free
-    set_pro_status(args.email, is_pro)
+    if len(sys.argv) < 2:
+        print("Usage: python toggle_pro.py <email> [true|false]")
+        sys.exit(1)
+
+    email = sys.argv[1]
+    # Default to True (i.e., make them pro)
+    status = True
+    if len(sys.argv) > 2 and sys.argv[2].lower() == "false":
+        status = False
+
+    toggle_pro_status(email, status)

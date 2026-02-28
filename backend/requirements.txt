@@ -4,5 +4,5 @@ pydantic
 httpx
 openai
 python-dotenv
-supabase
+pymongo[srv]
 python-multipart
