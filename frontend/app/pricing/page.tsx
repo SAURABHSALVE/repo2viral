@@ -3,10 +3,13 @@
 
 import React, { useState } from 'react';
 import Footer from '@/components/Footer';
-import { Terminal, Check, Star, Zap, Video, TrendingUp, Users, Menu, X } from 'lucide-react';
+import { Terminal, Check, Star, Zap, Video, TrendingUp, Users, Menu, X, Globe, ChevronDown } from 'lucide-react';
+import { useUserLocation } from '@/hooks/useUserLocation';
 
 export default function PricingPage() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const { isIndian, loading: locationLoading, updateCountry, location } = useUserLocation();
+    const [showLocationMenu, setShowLocationMenu] = useState(false);
 
     return (
         <main className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-indigo-500/30 overflow-x-hidden">
@@ -65,6 +68,42 @@ export default function PricingPage() {
                         Developers who market their work earn <strong className="text-white">2.5x more</strong> than those who don't.
                         Don't let your hard work rot in a private repo. Turn it into a content machine.
                     </p>
+                </div>
+
+                {/* Location Switcher */}
+                <div className="max-w-7xl mx-auto flex justify-end px-6 mb-4">
+                    <div className="relative">
+                        <button
+                            onClick={() => setShowLocationMenu(!showLocationMenu)}
+                            className="flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors bg-slate-900/50 px-3 py-1.5 rounded-full border border-slate-800"
+                        >
+                            <Globe className="w-3.5 h-3.5" />
+                            <span>
+                                {locationLoading ? 'Detecting...' : (isIndian ? '🇮🇳 India' : '🌏 Global')}
+                            </span>
+                            <ChevronDown className="w-3.5 h-3.5" />
+                        </button>
+
+                        {showLocationMenu && (
+                            <div className="absolute right-0 top-full mt-2 w-48 bg-slate-900 border border-slate-800 rounded-xl shadow-xl z-50 overflow-hidden">
+                                <div className="p-2">
+                                    <div className="text-xs font-semibold text-slate-500 px-2 py-1 mb-1">Billing Location</div>
+                                    <button
+                                        onClick={() => { updateCountry('IN'); setShowLocationMenu(false); }}
+                                        className={`w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 ${isIndian ? 'bg-indigo-600/10 text-indigo-400' : 'text-slate-300 hover:bg-slate-800'}`}
+                                    >
+                                        <span>🇮🇳</span> India (Razorpay)
+                                    </button>
+                                    <button
+                                        onClick={() => { updateCountry('US'); setShowLocationMenu(false); }}
+                                        className={`w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 ${!isIndian ? 'bg-indigo-600/10 text-indigo-400' : 'text-slate-300 hover:bg-slate-800'}`}
+                                    >
+                                        <span>🌏</span> International (Gumroad)
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-8 items-center">
@@ -131,14 +170,41 @@ export default function PricingPage() {
                                 <TrendingUp className="w-5 h-5 text-green-400 flex-shrink-0" />
                                 <span>Viral Stats Dashboard</span>
                             </li>
+
                         </ul>
-                        <a
-                            href="https://saurabhsalve.gumroad.com/l/repo2viral"
-                            target="_blank"
-                            className="block w-full py-4 text-center rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-lg hover:shadow-lg hover:shadow-indigo-500/25 transition-all hover:scale-[1.02]"
-                        >
-                            Become a Creator ($15)
-                        </a>
+
+                        {isIndian ? (
+                            <div className="space-y-4">
+                                <a
+                                    href="https://razorpay.me/@saurabhvijaysalve"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block w-full py-4 text-center rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-bold text-lg hover:shadow-lg hover:shadow-blue-500/25 transition-all hover:scale-[1.02]"
+                                >
+                                    Pay with Razorpay (₹1,299)
+                                </a>
+                                {/* Razorpay Verified Details */}
+                                <div className="bg-slate-950/50 rounded-xl p-4 border border-slate-800 text-left text-xs text-slate-400 space-y-1">
+                                    <div className="font-semibold text-slate-300 mb-2 border-b border-slate-800 pb-1">Verified Merchant Details</div>
+                                    <div className="grid grid-cols-[100px_1fr] gap-x-2">
+                                        <span>Registered Name:</span> <span className="text-slate-300">Razorpay Payments Private Limited</span>
+                                        <span>CIN:</span> <span className="font-mono">U62099KA2024PTC188982</span>
+                                        <span>PAN:</span> <span className="font-mono">AANCR6717K</span>
+                                        <span>TAN:</span> <span className="font-mono">BLRR30567F</span>
+                                        <span>GST:</span> <span className="font-mono">29AANCR6717K1ZN</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <a
+                                href="https://saurabhsalve.gumroad.com/l/repo2viral"
+                                target="_blank"
+                                className="block w-full py-4 text-center rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-lg hover:shadow-lg hover:shadow-indigo-500/25 transition-all hover:scale-[1.02]"
+                            >
+                                Become a Creator ($15)
+                            </a>
+                        )}
+
                         <p className="text-xs text-center text-slate-500 mt-4">
                             30-day money-back guarantee. No questions asked.
                         </p>
@@ -169,7 +235,7 @@ export default function PricingPage() {
             </div>
 
             <Footer />
-        </main>
+        </main >
     )
 }
 

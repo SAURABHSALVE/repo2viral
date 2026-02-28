@@ -145,7 +145,7 @@ export const RepoTrailer: React.FC<z.infer<typeof repoTrailerSchema>> = ({
                             transform: `scale(${windowScale}) rotateY(${windowTilt}deg)`,
                             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
                         }}
-                        className="w-[85%] h-[70%] bg-[#0f172a] rounded-xl border border-slate-700/50 overflow-hidden relative"
+                        className="w-[85%] max-w-6xl h-[70%] bg-[#0f172a] rounded-xl border border-slate-700/50 overflow-hidden relative"
                     >
                         {/* Glass Header */}
                         <div className="h-12 bg-slate-900/80 backdrop-blur border-b border-slate-700/50 flex items-center px-6 gap-3">
