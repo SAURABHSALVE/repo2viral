@@ -44,9 +44,10 @@ async def gumroad_webhook(request: Request):
     # Gumroad sends application/x-www-form-urlencoded
     form_data = await request.form()
     
-    # Log incoming (excluding secrets)
-    # print(f"Gumroad Payload: {form_data}") 
-    
+    # Log incoming payload to debug
+    print(f"🔍 Gumroad Payload Keys: {list(form_data.keys())}")
+    print(f"🔍 Full Payload: {dict(form_data)}")
+
     event = form_data.get("resource_name") # 'sale', 'cancellation', etc.
     email = form_data.get("email")
     product_permalink = form_data.get("product_permalink") # e.g. 'rczekx'
