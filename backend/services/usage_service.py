@@ -3,22 +3,18 @@ import secrets
 import string
 from datetime import datetime
 
-def check_and_increment_usage(user_id: str, email: str):
+def check_usage(user_id: str, email: str):
     """
-    Checks if a user is allowed to generate content.
-    - If user doesn't exist, create them.
-    - Free tier = 2 credits.
-    - Throws Exception if limit reached.
+    Validates that the user is allowed to generate content and ensures they exist in the DB.
+    Does NOT increment — call increment_usage() only after a successful generation.
+    Raises Exception with "Free limit reached" or "Pro limit reached" if over quota.
     """
     try:
         collection = db["user_usage"]
-
-        # 1. Fetch user usage
         user = collection.find_one({"user_id": user_id})
 
         if not user:
-            # User doesn't exist, create them (First use is free)
-            print("Creating new user...")
+            print(f"New user {user_id}, creating record...")
             collection.insert_one({
                 "user_id": user_id,
                 "email": email,
@@ -32,7 +28,6 @@ def check_and_increment_usage(user_id: str, email: str):
             usage_count = user.get("usage_count", 0)
             is_pro = user.get("is_pro", False)
 
-        # 2. Check limits
         if is_pro:
             if usage_count >= 1000:
                 raise Exception("Pro limit reached (1000/month)")
@@ -40,20 +35,31 @@ def check_and_increment_usage(user_id: str, email: str):
             if usage_count >= 2:
                 raise Exception("Free limit reached")
 
-        # 3. Increment usage
-        new_count = usage_count + 1
-        collection.update_one(
-            {"user_id": user_id},
-            {"$set": {"usage_count": new_count}}
-        )
-
         return True
 
     except Exception as e:
-        if str(e) == "Free limit reached":
+        if "limit reached" in str(e):
             raise e
-        print(f"Db Error: {e}")
+        print(f"Db Error in check_usage: {e}")
         raise Exception(f"Database error: {str(e)}")
+
+
+def increment_usage(user_id: str):
+    """Increments usage count after a successful generation."""
+    try:
+        db["user_usage"].update_one(
+            {"user_id": user_id},
+            {"$inc": {"usage_count": 1}}
+        )
+    except Exception as e:
+        print(f"Failed to increment usage for {user_id}: {e}")
+
+
+def check_and_increment_usage(user_id: str, email: str):
+    """Kept for backwards compatibility. Prefer check_usage + increment_usage."""
+    check_usage(user_id, email)
+    increment_usage(user_id)
+    return True
 
 
 def generate_random_password(length=16):

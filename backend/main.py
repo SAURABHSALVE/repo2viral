@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from services.github_loader import fetch_repo_content
 from services.ai_generator import generate_viral_content
-from services.usage_service import check_and_increment_usage
+from services.usage_service import check_usage, increment_usage
 from services.database import db
 from datetime import datetime
 
@@ -15,7 +15,6 @@ app = FastAPI(title="Repo2Viral Backend")
 
 app.include_router(webhooks.router, prefix="/api/webhooks", tags=["webhooks"])
 
-# Allow frontend to talk to backend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -36,12 +35,12 @@ def read_root():
 
 @app.post("/analyze")
 async def analyze_repo(request: RepoRequest):
-    # Step 0: Check Usage/Auth
+    # Step 0: Check quota BEFORE doing any work (don't increment yet)
     try:
-        check_and_increment_usage(request.user_id, request.email)
+        check_usage(request.user_id, request.email)
     except Exception as e:
-        if "Free limit reached" in str(e):
-             raise HTTPException(status_code=403, detail="Free limit reached. Upgrade to Pro.")
+        if "limit reached" in str(e).lower():
+            raise HTTPException(status_code=403, detail="Free limit reached. Upgrade to Pro.")
         raise HTTPException(status_code=500, detail=f"Usage check failed: {str(e)}")
 
     # Step 1: Get Data from GitHub
@@ -50,18 +49,21 @@ async def analyze_repo(request: RepoRequest):
         readme_content = await fetch_repo_content(request.url)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error fetching repo: {str(e)}")
-    
+
     if not readme_content:
         raise HTTPException(status_code=400, detail="Could not fetch README from this URL.")
 
     # Step 2: Generate Content with AI
     print(f"Generating AI content with tone: {request.tone}")
     content_data = generate_viral_content(readme_content, request.tone)
-    
+
     if not content_data:
         raise HTTPException(status_code=500, detail="AI generation failed. Check API server logs or keys.")
 
-    # Step 3: Save to History (MongoDB)
+    # Step 3: Increment usage only after successful generation
+    increment_usage(request.user_id)
+
+    # Step 4: Save to History (MongoDB)
     try:
         db["content_history"].insert_one({
             "user_id": request.user_id,
@@ -73,8 +75,7 @@ async def analyze_repo(request: RepoRequest):
         })
     except Exception as e:
         print(f"Failed to save history: {e}")
-        # We don't fail the request if history save fails, just log it.
-        
+
     return content_data
 
 from services.deep_analyser import analyze_repo_structure
@@ -88,12 +89,12 @@ class AnalyzeRequest(BaseModel):
 
 @app.post("/api/analyze-repo")
 async def analyze_repo_deep(request: AnalyzeRequest):
-    # Step 0: Check Usage/Auth
+    # Step 0: Check quota BEFORE doing any work (don't increment yet)
     try:
-        check_and_increment_usage(request.user_id, request.email)
+        check_usage(request.user_id, request.email)
     except Exception as e:
-        if "Free limit reached" in str(e):
-             raise HTTPException(status_code=403, detail="Free limit reached. Upgrade to Pro.")
+        if "limit reached" in str(e).lower():
+            raise HTTPException(status_code=403, detail="Free limit reached. Upgrade to Pro.")
         raise HTTPException(status_code=500, detail=f"Usage check failed: {str(e)}")
 
     # Step 1: Deep Analysis using User Token
@@ -103,20 +104,23 @@ async def analyze_repo_deep(request: AnalyzeRequest):
     except Exception as e:
         error_msg = str(e)
         if "401" in error_msg or "403" in error_msg or "Expired" in error_msg:
-             raise HTTPException(status_code=401, detail="GitHub Token Expired or Invalid. Please log in again.")
+            raise HTTPException(status_code=401, detail="GitHub Token Expired or Invalid. Please log in again.")
         raise HTTPException(status_code=400, detail=f"Deep analysis failed: {error_msg}")
 
     # Step 2: Generate AI Content
     print(f"Generating AI content with tone: {request.tone}")
     content_data = generate_viral_content(structure_data, request.tone)
-    
+
     if not content_data:
         raise HTTPException(status_code=500, detail="AI generation failed.")
-    
+
     # Inject Repo Stats into the result so frontend can use it for Video
     content_data["repo_stats"] = structure_data.get("repo_stats", {})
 
-    # Step 3: Save to History (MongoDB)
+    # Step 3: Increment usage only after successful generation
+    increment_usage(request.user_id)
+
+    # Step 4: Save to History (MongoDB)
     try:
         db["content_history"].insert_one({
             "user_id": request.user_id,
@@ -139,7 +143,6 @@ def get_user_history(user_id: str):
             .find({"user_id": user_id})
             .sort("created_at", -1)
         )
-        # Convert ObjectId to string for JSON serialization
         for item in history:
             item["_id"] = str(item["_id"])
             item["id"] = item["_id"]

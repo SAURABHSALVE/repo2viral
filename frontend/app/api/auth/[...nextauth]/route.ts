@@ -1,26 +1,20 @@
-import NextAuth from "next-auth";
+import NextAuth, { NextAuthOptions } from "next-auth";
 import GithubProvider from "next-auth/providers/github";
 
-const handler = NextAuth({
+export const authOptions: NextAuthOptions = {
     providers: [
         GithubProvider({
             clientId: process.env.GITHUB_CLIENT_ID!,
             clientSecret: process.env.GITHUB_CLIENT_SECRET!,
             authorization: {
                 params: {
-                    scope: "repo read:user user:email",
+                    scope: "read:user user:email public_repo",
                 },
             },
         }),
-        // To add Google login later, uncomment and add GOOGLE_CLIENT_ID/SECRET to .env.local:
-        // GoogleProvider({
-        //     clientId: process.env.GOOGLE_CLIENT_ID!,
-        //     clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-        // }),
     ],
     callbacks: {
         async jwt({ token, account }) {
-            // On initial sign in, persist the GitHub access token
             if (account) {
                 token.accessToken = account.access_token;
                 token.provider = account.provider;
@@ -28,7 +22,6 @@ const handler = NextAuth({
             return token;
         },
         async session({ session, token }) {
-            // Make access token and user id available in session
             session.accessToken = token.accessToken as string;
             session.userId = token.sub;
             if (session.user) {
@@ -44,6 +37,7 @@ const handler = NextAuth({
         signIn: "/",
     },
     secret: process.env.NEXTAUTH_SECRET,
-});
+};
 
+const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };

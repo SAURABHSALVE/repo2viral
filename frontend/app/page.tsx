@@ -105,17 +105,16 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Stats / Social Proof */}
+      {/* Social Proof — trust signals without fake numbers */}
       <div className="border-y border-slate-800/50 bg-slate-950/50 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-6 py-12 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+        <div className="max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
           {[
-            { label: "Repos Analyzed", value: "10,000+" },
-            { label: "Tweets Generated", value: "50k+" },
-            { label: "LinkedIn Posts", value: "25k+" },
-            { label: "Developer Users", value: "2,500+" },
+            { label: "Works on any public GitHub repo", value: "Zero Setup" },
+            { label: "Twitter, LinkedIn, Blog + HD Video", value: "4 Formats" },
+            { label: "Backed by evidence from your actual files", value: "No Hallucinations" },
           ].map((stat, i) => (
             <div key={i}>
-              <div className="text-3xl font-bold text-white mb-1">{stat.value}</div>
+              <div className="text-2xl font-bold text-indigo-400 mb-1">{stat.value}</div>
               <div className="text-sm text-slate-500 uppercase tracking-widest">{stat.label}</div>
             </div>
           ))}

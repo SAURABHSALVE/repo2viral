@@ -1,41 +1,28 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { connectToDatabase } from "@/lib/mongodb";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
-// GET /api/user/history — returns content_history for current user
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 export async function GET() {
     try {
-        const session = await getServerSession();
-        if (!session?.user?.email) {
+        const session = await getServerSession(authOptions);
+        if (!session?.user) {
             return NextResponse.json([]);
         }
 
-        const { db } = await connectToDatabase();
+        const userId = (session as any).userId || session.user.id;
+        if (!userId) {
+            return NextResponse.json([]);
+        }
 
-        // Find user's ID from user_usage collection
-        const user = await db.collection("user_usage").findOne({
-            $or: [
-                { user_id: session.userId },
-                { email: session.user.email },
-            ],
-        });
+        const res = await fetch(`${BACKEND_URL}/history?user_id=${encodeURIComponent(userId)}`);
+        if (!res.ok) {
+            return NextResponse.json([]);
+        }
 
-        const userId = user?.user_id || session.userId;
-
-        const history = await db
-            .collection("content_history")
-            .find({ user_id: userId })
-            .sort({ created_at: -1 })
-            .toArray();
-
-        // Convert MongoDB _id to string
-        const serialized = history.map((item) => ({
-            ...item,
-            _id: item._id.toString(),
-            id: item._id.toString(),
-        }));
-
-        return NextResponse.json(serialized);
+        const history = await res.json();
+        return NextResponse.json(history);
     } catch (error) {
         console.error("Error fetching history:", error);
         return NextResponse.json([]);

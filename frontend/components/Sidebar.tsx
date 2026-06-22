@@ -2,18 +2,19 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, History, User, Terminal, Video } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { LayoutDashboard, History, User, Terminal, Twitter, Image, Zap } from "lucide-react";
 import { signOut } from "next-auth/react";
 
 export default function Sidebar() {
     const pathname = usePathname();
-    const router = useRouter();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     const navItems = [
         { name: "Generator", href: "/dashboard/generator", icon: LayoutDashboard },
-        { name: "Video Studio", href: "/dashboard/video-preview", icon: Video },
+        { name: "Twitter Thread", href: "/dashboard/twitter", icon: Twitter },
+        { name: "README Card", href: "/dashboard/readme-card", icon: Image },
+        { name: "GitHub Action", href: "/dashboard/github-action", icon: Zap },
         { name: "My Vault", href: "/dashboard/vault", icon: History },
         { name: "Profile", href: "/dashboard/profile", icon: User },
     ];
@@ -23,8 +24,7 @@ export default function Sidebar() {
         setIsLoggingOut(true);
         try {
             await signOut({ callbackUrl: "/" });
-        } catch (error) {
-            console.error("Error signing out:", error);
+        } catch {
             setIsLoggingOut(false);
         }
     };
@@ -38,20 +38,21 @@ export default function Sidebar() {
                 <span className="font-bold text-xl text-white tracking-tight">Repo2Viral</span>
             </div>
 
-            <nav className="flex-1 p-4 space-y-2">
+            <nav className="flex-1 p-4 space-y-1">
                 {navItems.map((item) => {
                     const isActive = pathname === item.href;
                     return (
                         <Link
                             key={item.href}
                             href={item.href}
-                            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative overflow-hidden ${isActive
-                                ? "bg-indigo-600/10 text-indigo-400 border border-indigo-500/20"
-                                : "text-slate-400 hover:bg-slate-800 hover:text-white border border-transparent hover:border-slate-700"
-                                }`}
+                            className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 group relative overflow-hidden ${
+                                isActive
+                                    ? "bg-indigo-600/10 text-indigo-400 border border-indigo-500/20"
+                                    : "text-slate-400 hover:bg-slate-800 hover:text-white border border-transparent hover:border-slate-700"
+                            }`}
                         >
-                            <item.icon className={`w-5 h-5 relative z-10 ${isActive ? "text-indigo-400" : "text-slate-500 group-hover:text-white transition-colors"}`} />
-                            <span className="font-medium relative z-10">{item.name}</span>
+                            <item.icon className={`w-4 h-4 relative z-10 ${isActive ? "text-indigo-400" : "text-slate-500 group-hover:text-white transition-colors"}`} />
+                            <span className="text-sm font-medium relative z-10">{item.name}</span>
                         </Link>
                     );
                 })}
