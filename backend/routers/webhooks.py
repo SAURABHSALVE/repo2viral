@@ -48,15 +48,25 @@ async def gumroad_webhook(request: Request):
     print(f"🔍 Gumroad Payload Keys: {list(form_data.keys())}")
     print(f"🔍 Full Payload: {dict(form_data)}")
 
-    event = form_data.get("resource_name") # 'sale', 'cancellation', etc.
     email = form_data.get("email")
-    product_permalink = form_data.get("product_permalink") # e.g. 'rczekx'
-    
+    product_permalink = form_data.get("product_permalink") # e.g. 'https://saurabhsalve.gumroad.com/l/rczekx'
+    sale_id = form_data.get("sale_id")
+    subscription_id = form_data.get("subscription_id")
+    test = form_data.get("test") == "true"
+    refunded = form_data.get("refunded") == "true"
+    disputed = form_data.get("disputed") == "true"
+
     if not email:
         return {"status": "ignored", "reason": "no email"}
 
-    # Handle Events
-    if event == "sale":
+    # Detect event type based on payload fields
+    # Test ping: just log and return
+    if test:
+        print(f"📌 Test ping received for {email}")
+        return {"status": "test_ping"}
+
+    # Valid sale: has sale_id, subscription_id, not refunded, not disputed
+    if sale_id and subscription_id and not refunded and not disputed:
         # New subscription or purchase
         is_pro = True
         subscription_id = form_data.get("subscription_id")
@@ -86,17 +96,11 @@ async def gumroad_webhook(request: Request):
         handle_subscription_update(email, is_pro, subscription_id=subscription_id, license_key=license_key)
         print(f"✅ Processed SALE for {email}")
 
-    elif event in ["cancellation", "refund"]:
-        # Subscription ended
+    elif refunded or disputed:
+        # Refund or dispute: revoke access
         is_pro = False
         handle_subscription_update(email, is_pro)
-        print(f"Processed {event.upper()} for {email}")
-    
-    elif event == "ping":
-        # Test ping
-        print("Received Gumroad ping.")
-        
-    else:
-        print(f"Unhandled Gumroad event: {event}")
+        reason = "refunded" if refunded else "disputed"
+        print(f"⚠️ Processed {reason.upper()} for {email}, downgrading to free")
 
     return {"status": "success"}
